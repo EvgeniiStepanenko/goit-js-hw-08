@@ -4,41 +4,19 @@ import throttle from 'lodash.throttle';
 
 
 
-const player = new Player('vimeo-player');
-
-
-player.on(
-    'timeupdate',
-    throttle(function (data) {
-        localStorage.setItem('videoplayer-current-time', data.seconds);
-    }, 1000)
-);
-
-
-
-
-const playerCurrentTime = localStorage.getItem('videoplayer-current-time');
-
-if (playerCurrentTime) {
-  player
-  .setCurrentTime(playerCurrentTime)
-  .then(function () {
-    console.log('Video start time set to ' + playerCurrentTime + ' seconds');
-  }).catch(function (error) {
-    console.log(error);
-  });
+const iframe = document.querySelector('iframe');
+const player = new Player(iframe);
+const timeUpdate = function (time) {
+    localStorage.setItem('videoplayer-current-time', JSON.stringify(time));
 }
 
-function playFromLocalStorage() {
-  player
-  .play()
-  .then(function () {
-    console.log('Video resumed from ' + playerCurrentTime + ' seconds');
-  }).catch(function (error) {
-    console.log(error);
-  });
-}
+player.on('timeupdate', throttle(timeUpdate, 1000));
 
-// Listen for click on the play button
-const playButton = document.getElementById('play-button');
-playButton.addEventListener('click', playFromLocalStorage);
+const saveTime = localStorage.getItem('videoplayer-current-time');
+const timeStop = JSON.parse(saveTime);
+
+try {
+    player.setCurrentTime(timeStop.seconds || 0);  
+} catch (error) {
+    console.log(error.message);
+};
